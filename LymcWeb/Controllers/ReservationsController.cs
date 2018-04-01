@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using LymcWeb.Data;
 using LymcWeb.Models;
+using System.Security.Claims;
 
 namespace LymcWeb.Controllers
 {
@@ -63,6 +64,7 @@ namespace LymcWeb.Controllers
         {
             if (ModelState.IsValid)
             {
+                reservation.CreatedBy = User.FindFirst(ClaimTypes.NameIdentifier).Value;
                 _context.Add(reservation);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));

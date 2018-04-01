@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using LymcWeb.Data;
 using LymcWeb.Models;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace LymcWeb.Controllers
 {
@@ -65,6 +66,7 @@ namespace LymcWeb.Controllers
         {
             if (ModelState.IsValid)
             {
+                boat.CreatedBy = User.FindFirst(ClaimTypes.NameIdentifier).Value;
                 _context.Add(boat);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
