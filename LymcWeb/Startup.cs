@@ -13,6 +13,11 @@ using LymcWeb.Models;
 using LymcWeb.Services;
 using System.IO;
 using Microsoft.EntityFrameworkCore.Design;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace LymcWeb
 {
@@ -28,6 +33,12 @@ namespace LymcWeb
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAllOrigins",
+                    builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+            });
+
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
@@ -38,6 +49,28 @@ namespace LymcWeb
             // Add application services.
             services.AddTransient<IEmailSender, EmailSender>();
 
+            
+            services.AddAuthentication(options =>
+                {
+                //    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                //    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                //    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+
+                })
+                .AddJwtBearer(cfg =>
+                {
+                    cfg.RequireHttpsMetadata = false;
+                    cfg.SaveToken = true;
+                    cfg.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidIssuer = Configuration["JwtIssuer"],
+                        ValidAudience = Configuration["JwtIssuer"],
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JwtKey"])),
+                        ClockSkew = TimeSpan.Zero // remove delay of token when expire
+                    };
+                })
+                .AddCookie();
+            
             services.AddMvc();
 
             services.AddAuthorization(options =>
@@ -61,6 +94,8 @@ namespace LymcWeb
             {
                 app.UseExceptionHandler("/Home/Error");
             }
+
+            app.UseCors("AllowAllOrigins");
 
             app.UseStaticFiles();
 

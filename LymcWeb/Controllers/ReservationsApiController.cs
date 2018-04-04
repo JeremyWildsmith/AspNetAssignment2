@@ -7,11 +7,18 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LymcWeb.Data;
 using LymcWeb.Models;
+using System.Dynamic;
+using Microsoft.AspNetCore.Cors;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace LymcWeb.Controllers
 {
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Produces("application/json")]
     [Route("api/Reservations")]
+    [EnableCors("AllowAllOrigins")]
     public class ReservationsApiController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -23,9 +30,19 @@ namespace LymcWeb.Controllers
 
         // GET: api/ReservationsApi
         [HttpGet]
-        public IEnumerable<Reservation> GetReservation()
+        public IEnumerable<Object> GetReservation()
         {
-            return _context.Reservation;
+            List<Object> resv = new List<Object>();
+            foreach(Reservation r in _context.Reservation) {
+                dynamic b = new ExpandoObject();
+                b.CreatedBy = _context.Users.Find(r.CreatedBy).UserName;
+                b.ReservedBoat = _context.Boat.Find(r.ReservedBoat).BoatName;// r.Boat.BoatName;
+                b.Id = r.Id;
+                b.StartDate = r.StartDate;
+                b.EndDate = r.EndDate;
+                resv.Add(b);
+            }
+            return resv;
         }
 
         // GET: api/ReservationsApi/5
@@ -86,15 +103,18 @@ namespace LymcWeb.Controllers
         [HttpPost]
         public async Task<IActionResult> PostReservation([FromBody] Reservation reservation)
         {
+            reservation.Id = 0;
+            reservation.CreatedBy = User.FindFirst(ClaimTypes.NameIdentifier).Value;
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
             _context.Reservation.Add(reservation);
-            await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetReservation", new { id = reservation.Id }, reservation);
+            await _context.SaveChangesAsync();
+            
+            return Ok(reservation);
         }
 
         // DELETE: api/ReservationsApi/5

@@ -1,0 +1,21 @@
+  
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Id</th>
+        <th>Boat</th>
+        <th>Created By</th>
+        <th>Start Date</th>
+        <th>End Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let r of reservations">
+        <td>{{r.Id}}</td>
+        <td>{{r.ReservedBoat}}</td>
+        <td>{{r.CreatedBy}}</td>
+        <td>{{r.StartDate}}</td>
+        <td>{{r.EndDate}}</td>
+      </tr>
+    </tbody>
+  </table>
